@@ -1,6 +1,6 @@
 {
   "name": "slate-markdown-serializer",
-  "version": "0.5.2",
+  "version": "0.5.2-b",
   "description": "",
   "main": "lib/renderer.js",
   "scripts": {

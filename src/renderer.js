@@ -1,5 +1,5 @@
 import parser from "./parser";
-import { Raw } from "slate";
+import { Value } from "slate";
 import { Record } from "immutable";
 import { encode } from "./urls";
 
@@ -167,14 +167,14 @@ class Markdown {
   }
 
   /**
-   * Serialize a `state` object into an HTML string.
+   * Serialize a `value` object into an HTML string.
    *
-   * @param {State} state
+   * @param {Value} value
    * @return {String} markdown
    */
 
-  serialize(state) {
-    const { document } = state;
+  serialize(value) {
+    const { document } = value;
     const elements = document.nodes.map(node =>
       this.serializeNode(node, document)
     );
@@ -249,12 +249,14 @@ class Markdown {
    * Deserialize a markdown `string`.
    *
    * @param {String} markdown
-   * @return {State} state
+   * @return {Value} value
    */
-  deserialize(markdown) {
+  deserialize(markdown, options = {}) {
+    let { toJSON = false } = options;
     const nodes = parser.parse(markdown);
-    const state = Raw.deserialize(nodes, { terse: true });
-    return state;
+    const json = { document: nodes };
+    const ret = toJSON ? json : Value.fromJSON(json);
+    return ret;
   }
 }
 

@@ -134,10 +134,12 @@ const RULES = [
           return `*${children}*`;
         case "code":
           return `\`${children}\``;
-        case "inserted":
-          return `__${children}__`;
-        case "deleted":
+        case "underlined":
+          return `++${children}++`;
+        case "strikethrough":
           return `~~${children}~~`;
+        case "highlight":
+          return `==${children}==`;
       }
     }
   }

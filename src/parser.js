@@ -307,7 +307,8 @@ Lexer.prototype.token = function(src, top, bq) {
 
       this.tokens.push({
         type: "list_start",
-        style: todo ? "todo" : numbered ? "numbered" : "bulleted"
+        style: todo ? "todo" : numbered ? "numbered" : "bulleted",
+        start: bull ? bull.replace('.', '') : null,
       });
 
       // Get each top-level item.
@@ -783,10 +784,11 @@ Renderer.prototype.hr = function() {
   };
 };
 
-Renderer.prototype.list = function(childNode, style) {
+Renderer.prototype.list = function(childNode, style, start) {
   return {
     kind: "block",
     type: `${style}-list`,
+    data: { start },
     nodes: this.groupTextInLeaves(childNode)
   };
 };
@@ -1105,12 +1107,13 @@ Parser.prototype.tok = function() {
     case "list_start": {
       let body = [];
       let style = this.token.style;
+      let start = this.token.start;
 
       while (this.next().type !== "list_end") {
         body.push(this.tok());
       }
 
-      return this.renderer.list(body, style);
+      return this.renderer.list(body, style, start);
     }
     case "list_item_start": {
       let body = [];

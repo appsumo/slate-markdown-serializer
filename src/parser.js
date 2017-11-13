@@ -466,6 +466,7 @@ var inline = {
   br: /^ {2,}\n(?!\s*$)/,
   del: noop,
   ins: noop,
+  mark: noop,
   text: /^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/
 };
 
@@ -502,6 +503,7 @@ inline.gfm = assign({}, inline.normal, {
   escape: replace(inline.escape)("])", "~|])")(),
   del: /^~~(?=\S)([\s\S]*?\S)~~/,
   ins: /^\+\+(?=\S)([\s\S]*?\S)\+\+/,
+  mark: /^\=\=(?=\S)([\s\S]*?\S)\=\=/,
   text: replace(inline.text)("]|", "~+]|")()
 });
 
@@ -654,6 +656,13 @@ InlineLexer.prototype.parse = function(src) {
     if ((cap = this.rules.ins.exec(src))) {
       src = src.substring(cap[0].length);
       out.push(this.renderer.ins(this.parse(cap[1])));
+      continue;
+    }
+
+    // mark (from markdown-it)
+    if ((cap = this.rules.mark.exec(src))) {
+      src = src.substring(cap[0].length);
+      out.push(this.renderer.mark(this.parse(cap[1])));
       continue;
     }
 
@@ -879,6 +888,17 @@ Renderer.prototype.ins = function(childNode) {
       node.marks.push({ type: "underlined" });
     } else {
       node.marks = [{ type: "underlined" }];
+    }
+    return node;
+  });
+};
+
+Renderer.prototype.mark = function(childNode) {
+  return childNode.map(node => {
+    if (node.marks) {
+      node.marks.push({ type: "highlight" });
+    } else {
+      node.marks = [{ type: "highlight" }];
     }
     return node;
   });

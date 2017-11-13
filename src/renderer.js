@@ -70,21 +70,21 @@ const RULES = [
           return `${children}\n`;
         case "block-quote":
           return `> ${children}\n`;
-        case "todo-list":
+        // case "todo-list":
         case "bulleted-list":
-        case "ordered-list":
+        case "numbered-list":
           if (parent === document) {
             return children;
           }
           return `\n${children.replace(/^/gm, "   ")}`;
         case "list-item": {
           switch (parent.type) {
-            case "ordered-list":
+            case "numbered-list":
               return `1. ${children}\n`;
-            case "todo-list":
-              let checked = obj.getIn(["data", "checked"]);
-              let box = checked ? "[x]" : "[ ]";
-              return `${box} ${children}\n`;
+            // case "todo-list":
+            //   let checked = obj.getIn(["data", "checked"]);
+            //   let box = checked ? "[x]" : "[ ]";
+            //   return `${box} ${children}\n`;
             default:
             case "bulleted-list":
               return `* ${children}\n`;

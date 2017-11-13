@@ -302,12 +302,12 @@ Lexer.prototype.token = function(src, top, bq) {
     if ((cap = this.rules.list.exec(src))) {
       src = src.substring(cap[0].length);
       bull = cap[2];
-      let ordered = bull.length > 1;
+      let numbered = bull.length > 1;
       let todo = bull[0] === "[";
 
       this.tokens.push({
         type: "list_start",
-        style: todo ? "todo" : ordered ? "ordered" : "bulleted"
+        style: todo ? "todo" : numbered ? "numbered" : "bulleted"
       });
 
       // Get each top-level item.

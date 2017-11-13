@@ -865,9 +865,9 @@ Renderer.prototype.br = function() {
 Renderer.prototype.del = function(childNode) {
   return childNode.map(node => {
     if (node.marks) {
-      node.marks.push({ type: "deleted" });
+      node.marks.push({ type: "strikethrough" });
     } else {
-      node.marks = [{ type: "deleted" }];
+      node.marks = [{ type: "strikethrough" }];
     }
     return node;
   });
@@ -876,9 +876,9 @@ Renderer.prototype.del = function(childNode) {
 Renderer.prototype.ins = function(childNode) {
   return childNode.map(node => {
     if (node.marks) {
-      node.marks.push({ type: "inserted" });
+      node.marks.push({ type: "underlined" });
     } else {
-      node.marks = [{ type: "inserted" }];
+      node.marks = [{ type: "underlined" }];
     }
     return node;
   });

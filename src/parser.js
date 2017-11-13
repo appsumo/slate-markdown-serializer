@@ -932,7 +932,7 @@ Renderer.prototype.image = function(href, title, alt) {
   }
 
   return {
-    kind: "block",
+    kind: "inline",
     type: "image",
     nodes: [
       {

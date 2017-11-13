@@ -106,10 +106,6 @@ const RULES = [
           return `###### ${children}`;
         case "horizontal-rule":
           return `---\n`;
-        case "image":
-          const alt = obj.getIn(["data", "alt"]);
-          const src = encode(obj.getIn(["data", "src"]) || "");
-          return `![${alt}](${src})\n`;
       }
     }
   },
@@ -120,6 +116,10 @@ const RULES = [
         case "link":
           const href = encode(obj.getIn(["data", "href"]) || "");
           return `[${children.trim()}](${href})`;
+        case "image":
+          const alt = obj.getIn(["data", "alt"]);
+          const src = encode(obj.getIn(["data", "src"]) || "");
+          return `![${alt}](${src})\n`;
       }
     }
   },

@@ -467,8 +467,10 @@ var inline = {
   br: /^ {2,}\n(?!\s*$)/,
   del: noop,
   ins: noop,
-  mark: noop,
-  text: /^[\s\S]+?(?=[\\<!\[_*`]| {2,}\n|$)/
+  sub: /^\~(?=\S)([\s\S]*?\S)\~/,
+  sup: /^\^(?=\S)([\s\S]*?\S)\^/,
+  mark: /^\=\=(?=\S)([\s\S]*?\S)\=\=/,
+  text: /^[\s\S]+?(?=[\\<!\[_*`^=]| {2,}\n|$)/
 };
 
 inline._inside = /(?:\[[^\]]*\]|[^\[\]]|\](?=[^\[]*\]))*/;
@@ -504,7 +506,6 @@ inline.gfm = assign({}, inline.normal, {
   escape: replace(inline.escape)("])", "~|])")(),
   del: /^~~(?=\S)([\s\S]*?\S)~~/,
   ins: /^\+\+(?=\S)([\s\S]*?\S)\+\+/,
-  mark: /^\=\=(?=\S)([\s\S]*?\S)\=\=/,
   text: replace(inline.text)("]|", "~+]|")()
 });
 
@@ -660,7 +661,21 @@ InlineLexer.prototype.parse = function(src) {
       continue;
     }
 
-    // mark (from markdown-it)
+    // sub (markdown-it)
+    if ((cap = this.rules.sub.exec(src))) {
+      src = src.substring(cap[0].length);
+      out.push(this.renderer.sub(this.parse(cap[1])));
+      continue;
+    }
+
+    // sup (markdown-it)
+    if ((cap = this.rules.sup.exec(src))) {
+      src = src.substring(cap[0].length);
+      out.push(this.renderer.sup(this.parse(cap[1])));
+      continue;
+    }
+
+    // mark (markdown-it)
     if ((cap = this.rules.mark.exec(src))) {
       src = src.substring(cap[0].length);
       out.push(this.renderer.mark(this.parse(cap[1])));
@@ -901,6 +916,28 @@ Renderer.prototype.mark = function(childNode) {
       node.marks.push({ type: "highlight" });
     } else {
       node.marks = [{ type: "highlight" }];
+    }
+    return node;
+  });
+};
+
+Renderer.prototype.sub = function(childNode) {
+  return childNode.map(node => {
+    if (node.marks) {
+      node.marks.push({ type: "subscript" });
+    } else {
+      node.marks = [{ type: "subscript" }];
+    }
+    return node;
+  });
+};
+
+Renderer.prototype.sup = function(childNode) {
+  return childNode.map(node => {
+    if (node.marks) {
+      node.marks.push({ type: "superscript" });
+    } else {
+      node.marks = [{ type: "superscript" }];
     }
     return node;
   });

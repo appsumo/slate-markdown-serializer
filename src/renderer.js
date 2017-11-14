@@ -140,6 +140,10 @@ const RULES = [
           return `~~${children}~~`;
         case "highlight":
           return `==${children}==`;
+        case "subscript":
+          return `~${children}~`;
+        case "superscript":
+          return `^${children}^`;
       }
     }
   }

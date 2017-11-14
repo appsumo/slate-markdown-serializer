@@ -64,7 +64,7 @@ const RULES = [
           } else {
             return `\n${children}\n`;
           }
-        case "code":
+        case "block-code":
           return `\`\`\`\n${children}\n\`\`\`\n`;
         case "code-line":
           return `${children}\n`;

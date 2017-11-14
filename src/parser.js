@@ -49,7 +49,7 @@ var defaults = {
 
 var block = {
   newline: /^\n+/,
-  code: /^( {4}[^\n]+\n*)+/,
+  blockcode: /^( {4}[^\n]+\n*)+/,
   fences: noop,
   hr: /^( *[-*_]){3,} *(?:\n+|$)/,
   heading: /^ *(#{1,6}) *([^\n]+?) *#* *(?:\n+|$)/,
@@ -191,12 +191,12 @@ Lexer.prototype.token = function(src, top, bq) {
       }
     }
 
-    // code
-    if ((cap = this.rules.code.exec(src))) {
+    // blockcode
+    if ((cap = this.rules.blockcode.exec(src))) {
       src = src.substring(cap[0].length);
       cap = cap[0].replace(/^ {4}/gm, "");
       this.tokens.push({
-        type: "code",
+        type: "block-code",
         text: !this.options.pedantic ? cap.replace(/\n+$/, "") : cap
       });
       continue;
@@ -206,7 +206,7 @@ Lexer.prototype.token = function(src, top, bq) {
     if ((cap = this.rules.fences.exec(src))) {
       src = src.substring(cap[0].length);
       this.tokens.push({
-        type: "code",
+        type: "block-code",
         lang: cap[2],
         text: cap[3]
       });
@@ -635,7 +635,7 @@ InlineLexer.prototype.parse = function(src) {
     // code
     if ((cap = this.rules.code.exec(src))) {
       src = src.substring(cap[0].length);
-      out.push(this.renderer.codespan(cap[2]));
+      out.push(this.renderer.code(cap[2]));
       continue;
     }
 
@@ -735,7 +735,7 @@ Renderer.prototype.groupTextInLeaves = function(childNode) {
   return out;
 };
 
-Renderer.prototype.code = function(childNode, lang) {
+Renderer.prototype.blockcode = function(childNode, lang) {
   var data = {};
 
   if (lang) {
@@ -744,7 +744,7 @@ Renderer.prototype.code = function(childNode, lang) {
 
   return {
     kind: "block",
-    type: "code",
+    type: "block-code",
     data,
     nodes: this.groupTextInLeaves(childNode)
   };
@@ -865,7 +865,7 @@ Renderer.prototype.em = function(childNode) {
   });
 };
 
-Renderer.prototype.codespan = function(text) {
+Renderer.prototype.code = function(text) {
   return new TextNode(text, { type: "code" });
 };
 
@@ -1056,8 +1056,8 @@ Parser.prototype.tok = function() {
         this.token.depth
       );
     }
-    case "code": {
-      return this.renderer.code(
+    case "block-code": {
+      return this.renderer.blockcode(
         this.inline.parse(this.token.text),
         this.token.lang
       );

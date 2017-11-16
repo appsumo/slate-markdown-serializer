@@ -59,6 +59,7 @@ var block = {
   list: /^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
   def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
   paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|def))+)\n*/,
+  center: /^->([\s\S]*?)<-/,
   text: /^[^\n]+/
 };
 
@@ -205,10 +206,23 @@ Lexer.prototype.token = function(src, top, bq) {
     // fences (gfm)
     if ((cap = this.rules.fences.exec(src))) {
       src = src.substring(cap[0].length);
+
+      const lang = cap[2];
+      let text = cap[3];
+      let align;
+
+      // center
+      if (cap = this.rules.center.exec(text)) {
+        text = text.substring(cap[0].length);
+        text = `${cap[1].trim()}${text}`;
+        align = "center";
+      }
+
       this.tokens.push({
         type: "block-code",
-        lang: cap[2],
-        text: cap[3]
+        align: align,
+        lang: lang,
+        text: text,
       });
       continue;
     }
@@ -216,10 +230,23 @@ Lexer.prototype.token = function(src, top, bq) {
     // heading
     if ((cap = this.rules.heading.exec(src))) {
       src = src.substring(cap[0].length);
+
+      const depth = cap[1].length;
+      let text = cap[2];
+      let align;
+
+      // center
+      if (cap = this.rules.center.exec(text)) {
+        text = text.substring(cap[0].length);
+        text = `${cap[1].trim()}${text}`;
+        align = "center";
+      }
+
       this.tokens.push({
         type: "heading",
-        depth: cap[1].length,
-        text: cap[2]
+        depth: depth,
+        align: align,
+        text: text,
       });
       continue;
     }
@@ -327,6 +354,16 @@ Lexer.prototype.token = function(src, top, bq) {
         space = item.length;
         item = item.replace(/^ *([*+-]|\d+\.|\[[x\s]\]) +/, "");
 
+        // center
+        let align = undefined;
+        let subCap;
+
+        if (subCap = this.rules.center.exec(item)) {
+          item = item.substring(subCap[0].length);
+          item = `${subCap[1].trim()}${item}`;
+          align = "center";
+        }
+
         // Outdent whatever the
         // list item contains. Hacky.
         if (~item.indexOf("\n ")) {
@@ -359,6 +396,7 @@ Lexer.prototype.token = function(src, top, bq) {
 
         this.tokens.push({
           checked,
+          align: align,
           type: loose ? "loose_item_start" : "list_item_start"
         });
 
@@ -424,11 +462,23 @@ Lexer.prototype.token = function(src, top, bq) {
     // top-level paragraph
     if (top && (cap = this.rules.paragraph.exec(src))) {
       src = src.substring(cap[0].length);
+
+      let align;
+      let text = cap[1].charAt(cap[1].length - 1) === "\n"
+        ? cap[1].slice(0, -1)
+        : cap[1];
+
+      // center
+      if (cap = this.rules.center.exec(text)) {
+        text = text.substring(cap[0].length);
+        text = `${cap[1].trim()}${text}`;
+        align = "center";
+      }
+
       this.tokens.push({
         type: "paragraph",
-        text: cap[1].charAt(cap[1].length - 1) === "\n"
-          ? cap[1].slice(0, -1)
-          : cap[1]
+        align: align,
+        text: text,
       });
       continue;
     }
@@ -750,8 +800,12 @@ Renderer.prototype.groupTextInLeaves = function(childNode) {
   return out;
 };
 
-Renderer.prototype.blockcode = function(childNode, lang) {
-  var data = {};
+Renderer.prototype.blockcode = function(childNode, lang, align) {
+  const data = {};
+
+  if (align) {
+    data.align = align;
+  }
 
   if (lang) {
     data.language = this.options.langPrefix + lang;
@@ -760,23 +814,37 @@ Renderer.prototype.blockcode = function(childNode, lang) {
   return {
     kind: "block",
     type: "block-code",
-    data,
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
 
-Renderer.prototype.blockquote = function(childNode) {
+Renderer.prototype.blockquote = function(childNode, align) {
+  const data = {};
+
+  if (align) {
+    data.align = align;
+  }
+
   return {
     kind: "block",
     type: "block-quote",
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
 
-Renderer.prototype.heading = function(childNode, level) {
+Renderer.prototype.heading = function(childNode, level, align) {
+  const data = {};
+
+  if (align) {
+    data.align = align;
+  }
+
   return {
     kind: "block",
     type: "heading" + level,
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
@@ -800,32 +868,50 @@ Renderer.prototype.hr = function() {
 };
 
 Renderer.prototype.list = function(childNode, style, start) {
+  const data = {};
+
+  if (start) {
+    data.start = start;
+  }
+
   return {
     kind: "block",
     type: `${style}-list`,
-    data: { start },
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
 
 Renderer.prototype.listitem = function(childNode, flags = {}) {
-  let data;
+  const data = {};
+
   if (flags.checked !== undefined) {
-    data = { checked: flags.checked };
+    data.checked = flags.checked;
+  }
+
+  if (flags.align !== undefined) {
+    data.align = flags.align;
   }
 
   return {
     kind: "block",
     type: "list-item",
-    data,
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
 
-Renderer.prototype.paragraph = function(childNode) {
+Renderer.prototype.paragraph = function(childNode, align) {
+  const data = {};
+
+  if (align !== undefined) {
+    data.align = align;
+  }
+
   return {
     kind: "block",
     type: "paragraph",
+    data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
 };
@@ -910,17 +996,6 @@ Renderer.prototype.ins = function(childNode) {
   });
 };
 
-Renderer.prototype.mark = function(childNode) {
-  return childNode.map(node => {
-    if (node.marks) {
-      node.marks.push({ type: "highlight" });
-    } else {
-      node.marks = [{ type: "highlight" }];
-    }
-    return node;
-  });
-};
-
 Renderer.prototype.sub = function(childNode) {
   return childNode.map(node => {
     if (node.marks) {
@@ -938,6 +1013,17 @@ Renderer.prototype.sup = function(childNode) {
       node.marks.push({ type: "superscript" });
     } else {
       node.marks = [{ type: "superscript" }];
+    }
+    return node;
+  });
+};
+
+Renderer.prototype.mark = function(childNode) {
+  return childNode.map(node => {
+    if (node.marks) {
+      node.marks.push({ type: "highlight" });
+    } else {
+      node.marks = [{ type: "highlight" }];
     }
     return node;
   });
@@ -1090,13 +1176,15 @@ Parser.prototype.tok = function() {
     case "heading": {
       return this.renderer.heading(
         this.inline.parse(this.token.text),
-        this.token.depth
+        this.token.depth,
+        this.token.align,
       );
     }
     case "block-code": {
       return this.renderer.blockcode(
         this.inline.parse(this.token.text),
-        this.token.lang
+        this.token.lang,
+        this.token.align,
       );
     }
     case "table": {
@@ -1134,12 +1222,14 @@ Parser.prototype.tok = function() {
       return this.renderer.table(body);
     }
     case "blockquote_start": {
+      let align;
       let body = [];
 
       while (this.next().type !== "blockquote_end") {
+        if (this.token.align) align = this.token.align;
         body.push(this.inline.parse(this.token.text));
       }
-      return this.renderer.blockquote(body);
+      return this.renderer.blockquote(body, align);
     }
     case "list_start": {
       let body = [];
@@ -1154,7 +1244,10 @@ Parser.prototype.tok = function() {
     }
     case "list_item_start": {
       let body = [];
-      let flags = { checked: this.token.checked };
+      let flags = {
+        checked: this.token.checked,
+        align: this.token.align,
+      };
 
       while (this.next().type !== "list_item_end") {
         body.push(this.token.type === "text" ? this.parseText() : this.tok());
@@ -1171,7 +1264,10 @@ Parser.prototype.tok = function() {
       return this.renderer.listitem(body);
     }
     case "paragraph": {
-      return this.renderer.paragraph(this.inline.parse(this.token.text));
+      return this.renderer.paragraph(
+        this.inline.parse(this.token.text),
+        this.token.align,
+      );
     }
     case "text": {
       return this.renderer.text(this.parseText());

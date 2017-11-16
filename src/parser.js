@@ -1227,7 +1227,7 @@ Parser.prototype.tok = function() {
 
       while (this.next().type !== "blockquote_end") {
         if (this.token.align) align = this.token.align;
-        body.push(this.inline.parse(this.token.text));
+        body.push(this.token.type === "text" ? this.parseText() : this.tok());
       }
       return this.renderer.blockquote(body, align);
     }

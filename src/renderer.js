@@ -90,19 +90,17 @@ const RULES = [
               return `* ${children}\n`;
           }
         }
-        case "heading1":
+        case "heading-1":
           return `# ${children}`;
-        case "heading2":
+        case "heading-2":
           return `## ${children}`;
-        case "heading3":
+        case "heading-3":
           return `### ${children}`;
-        case "heading4":
+        case "heading-4":
           return `#### ${children}`;
-        case "heading5":
+        case "heading-5":
           return `##### ${children}`;
-        case "heading6":
-          return `###### ${children}`;
-        case "heading6":
+        case "heading-6":
           return `###### ${children}`;
         case "horizontal-rule":
           return `---\n`;

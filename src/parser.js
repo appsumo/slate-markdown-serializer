@@ -843,7 +843,7 @@ Renderer.prototype.heading = function(childNode, level, align) {
 
   return {
     kind: "block",
-    type: "heading" + level,
+    type: "heading-" + level,
     data: data,
     nodes: this.groupTextInLeaves(childNode)
   };
